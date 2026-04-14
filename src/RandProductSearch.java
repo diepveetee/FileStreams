@@ -4,13 +4,19 @@ import java.io.RandomAccessFile;
 
 public class RandProductSearch extends JFrame {
 
-    private JTextField tfSearch;
-    private JTextArea taResults;
-    private RandomAccessFile raf;
+    private JTextField tfSearch; // User input for partial name search
+    private JTextArea taResults;// Displays matching product records
+    private RandomAccessFile raf; // RandomAccessFile for reading product data
 
+
+
+    /**
+     * Constructor for GUI and opens the RandomAccessFile.
+     */
     public RandProductSearch() {
         super("Random Product Search");
 
+        // Attempt to open the data file for reading. R is for read only
         try {
             raf = new RandomAccessFile("products.dat", "r");
         } catch (Exception e) {
@@ -42,26 +48,41 @@ public class RandProductSearch extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
+
+    /**
+     * Reads through the RandomAccessFile record-by-record,
+     * reconstructs Product objects, and displays those whose
+     * names contain the user's search text.
+     */
+
     private void searchRecords() {
         try {
             taResults.setText("");
-            raf.seek(0);
+            raf.seek(0);    //start at beginning of file
 
             long recordSize = Product.NAME_LEN +
                     Product.DESC_LEN +
                     Product.ID_LEN +
-                    10; // cost field
+                    10; // cost field at 10 chars
 
             String query = tfSearch.getText().trim().toLowerCase();
 
+            tfSearch.getText().trim().toLowerCase();
+
+            // Loop through all records in the file
             while (raf.getFilePointer() < raf.length()) {
+
+                // Read one full fixed-length record
                 byte[] buffer = new byte[(int) recordSize];
                 raf.read(buffer);
 
+                // Convert raw bytes to a string
                 String rec = new String(buffer);
 
+                // Rebuild a Product object from the fixed record
                 Product p = Product.fromFixedRecord(rec);
 
+                // Case-insensitive partial match on product name
                 if (p.getName().toLowerCase().contains(query)) {
                     taResults.append(
                             "Name: " + p.getName() + "\n" +
@@ -73,7 +94,13 @@ public class RandProductSearch extends JFrame {
             }
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Search error: " + ex.getMessage());
+            JOptionPane.showMessageDialog(
+                    this,
+                    "An error occurred while searching the product file.\n\nDetails: " + ex.getMessage(),
+                    "Search Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+
         }
     }
 
