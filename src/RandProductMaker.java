@@ -2,26 +2,31 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-
-import javax.swing.*;
-import java.awt.*;
 import java.io.RandomAccessFile;
 
 public class RandProductMaker extends JFrame {
 
     private JTextField tfName, tfDescription, tfID, tfCost, tfRecordCount;
-    private RandomAccessFile raf;
-    private int recordCount = 0;
 
+    private RandomAccessFile raf;  // RandomAccessFile for writing product records
+    private int recordCount = 0; // Tracks number of records written during this session
+
+
+    /**
+     * Constructor sets up the GUI and opens the RandomAccessFile.
+     */
     public RandProductMaker() {
         super("Random Product Maker");
 
+
+        // Attempt to open the file for read/write access
         try {
             raf = new RandomAccessFile("products.dat", "rw");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "File error: " + e.getMessage());
         }
 
+        //Form field layout
         setLayout(new GridLayout(6, 2));
 
         add(new JLabel("ID:"));
@@ -59,24 +64,41 @@ public class RandProductMaker extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
+
+    /**
+     * Reads user input, validates it, constructs a Product object,
+     * converts it to a fixed-length record, and writes it to the file.
+     */
+
     private void addRecord() {
         try {
+            // Read and trim user input
             String name = tfName.getText().trim();
             String desc = tfDescription.getText().trim();
             String id = tfID.getText().trim();
             double cost = Double.parseDouble(tfCost.getText().trim());
 
+
+            // Basic validation
             if (name.isEmpty() || desc.isEmpty() || id.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "All fields must be filled.");
                 return;
             }
 
+            // Create Product object
             Product p = new Product(id, name, desc, cost);
+
+            // Convert to fixed-length record
             String record = p.toFixedRecord();
 
+
+
+            // Append record to end of file
             raf.seek(raf.length());
             raf.write(record.getBytes());
 
+
+            // Update record count
             recordCount++;
             tfRecordCount.setText(String.valueOf(recordCount));
 
@@ -86,7 +108,12 @@ public class RandProductMaker extends JFrame {
             tfCost.setText("");
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Invalid input. Please check your fields.\n\nDetails: " + ex.getMessage(),
+                    "Input Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 
